@@ -1,3 +1,4 @@
-# mavsimPy
+# ME457
 
-The files in this directory are template files for the complete project in the book. 
+Working project repository for UP group
+Andrew Kim, Ginger Lau, Kameron Wang, Zachary Potoskie
