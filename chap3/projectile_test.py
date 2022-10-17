@@ -5,9 +5,9 @@ mavsimPy
         12/18/2018 - RWB
         1/14/2019 - RWB
 """
+from re import T
 import sys
 import os
-
 
 sys.path.append(os.path.split(sys.path[0])[0])
 
@@ -27,7 +27,7 @@ from message_types.msg_delta import MsgDelta
 
 # initialize the visualization
 VIDEO = False  # True==write video, False==don't write video
-ANIMATE = True
+ANIMATE = False
 if ANIMATE:
     mav_view = MavViewer()  # initialize the mav viewer
     data_view = DataViewer()  # initialize view of data plots
@@ -47,16 +47,19 @@ sim_time = SIM.start_time
 # define initial conditions for projectile
 north0 = 0.
 east0 = 0.
-altitude0 = 100
-u0 = 0
+altitude0 = 0.0000000001
+u0 = 10
 phi0 = np.pi * (0)  # initial roll angle
-theta0 = np.pi * (-1/2)  # initial pitch angle
+theta0 = np.pi * (1/4)  # initial pitch angle
 psi0 = np.pi * (0)  # initial yaw angle
 e = Euler2Quaternion(phi0, theta0, psi0)
 e0 = e.item(0)
 e1 = e.item(1)
 e2 = e.item(2)
 e3 = e.item(3)
+p0 = 0.
+q0 = 1.75
+r0 = 0.
 mav._state = np.array([
     [north0],         # (north0)
     [east0],         # (east0)
@@ -68,17 +71,15 @@ mav._state = np.array([
     [e1],    # (e1)
     [e2],    # (e2)
     [e3],    # (e3)
-    [0.],    # (p0)
-    [0.],    # (q0)
-    [0.],    # (r0)
+    [p0],    # (p0)
+    [q0],    # (q0)
+    [r0],    # (r0)
 ])
 mav._update_true_state()
 
 V0_z = u0 * np.sin(theta0)
 V0_x = np.cos(psi0) * u0 * np.cos(theta0)
 V0_y = np.sin(psi0) * u0 * np.cos(theta0)
-
-print(V0_x, V0_y, V0_z)
 
 t_flight_expected = (V0_z + np.sqrt(V0_z**2 + 2*MAV.gravity*altitude0))/MAV.gravity
 n_land = north0 + t_flight_expected * V0_x
@@ -93,6 +94,7 @@ else:
 V_impact = np.sqrt(V_impact_z**2 + V0_y**2 + V0_x**2)
 
 last_max_alt = altitude0
+rot_counter = 0
 sim_time = 0
 assert altitude0 >= 0
 while sim_time < t_flight_expected + 100:
@@ -103,6 +105,7 @@ while sim_time < t_flight_expected + 100:
     f_b = Rb_i @ f_i
     forces_moments = np.array([[f_b[0], f_b[1], f_b[2], 0, 0, 0]]).T
 
+    last_theta = mav.true_state.theta
     mav.update(forces_moments)  # propagate the MAV dynamics
 
     if ANIMATE:
@@ -121,6 +124,8 @@ while sim_time < t_flight_expected + 100:
         last_max_alt = mav.true_state.altitude
     sim_time += SIM.ts_simulation
 
+    rot_counter = rot_counter + np.abs(last_theta - mav.true_state.theta)
+
     # LANDING + COMPARE SIM AND PHYSICS VALUES
     if mav.true_state.altitude <= 0:
         ## FLIGHT TIME UNIT TEST
@@ -128,7 +133,7 @@ while sim_time < t_flight_expected + 100:
             print("\nPASSED!!")
         else:
             print("FAILED!")
-        print("Time to fall from %d is %f and expected to be %f \n" %(altitude0, sim_time, t_flight_expected))
+        print("Expect to fall for %f and it was %f \n" %(t_flight_expected, sim_time))
 
         ## LANDING POSITION (NORTH) UNIT TEST
         n_pos_error = SIM.ts_simulation * max(np.abs(V0_x), 1)
@@ -162,6 +167,9 @@ while sim_time < t_flight_expected + 100:
         else:
             print("FAILED!")
         print("Expected impact velocity to be %f and it was %f \n" %(V_impact, V))
+
+        # LANDING ORIENTATION
+        print("Expect body to spin %f and it spun %f" %(q0*sim_time, rot_counter))
 
         break
 
