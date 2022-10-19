@@ -5,9 +5,9 @@ import numpy as np
 ######################################################################################
                 #   sample times, etc
 ######################################################################################
-ts_simulation = 0.005  # smallest time step for simulation
+ts_simulation = 0.1  # smallest time step for simulation
 start_time = 0.  # start time for simulation
-end_time = 20.  # end time for simulation
+end_time = 60.  # end time for simulation
 
 ts_plotting = 0.1  # refresh rate for plots
 

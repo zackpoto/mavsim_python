@@ -41,10 +41,10 @@ plot_time = sim_time
 print("Press Command-Q to exit...")
 while sim_time < SIM.end_time:
     # -------set control surfaces-------------
-    delta.elevator = -0.1248
-    delta.aileron = 0.001836
-    delta.rudder = -0.0003026
-    delta.throttle = 0.6768
+    delta.elevator = -0.1
+    delta.aileron = 0 # 0.001836
+    delta.rudder = 0 # -0.0003026
+    delta.throttle = 0 # 1.00
 
     # -------physical system-------------
     current_wind = wind.update()  # get the new wind vector
@@ -67,7 +67,3 @@ while sim_time < SIM.end_time:
 
 if VIDEO is True:
     video.close()
-
-
-
-
