@@ -165,8 +165,8 @@ class MavDynamics:
         steady_state = wind[0:3]
         gust = wind[3:6]
         # convert wind vector from world to body frame and add gust
-        Rb_i = Quaternion2Rotation(self._state[6:10])
-        wind_body_frame = Rb_i @ steady_state + gust
+        Ri_b = Quaternion2Rotation(self._state[6:10]).T
+        wind_body_frame = Ri_b @ steady_state + gust
         # velocity vector relative to the airmass
         v_air = self._state[3:6] - wind_body_frame
         ur = v_air.item(0)
@@ -191,7 +191,7 @@ class MavDynamics:
         :param delta: np.matrix(delta_a, delta_e, delta_r, delta_t)
         :return: Forces and Moments on the UAV np.matrix(Fx, Fy, Fz, Ml, Mn, Mm)
         """
-        phi, theta, psi = Quaternion2Euler(self._state[6:10])
+        # phi, theta, psi = Quaternion2Euler(self._state[6:10])
         p = self._state.item(10)
         q = self._state.item(11)
         r = self._state.item(12)
@@ -202,8 +202,8 @@ class MavDynamics:
         sigma = sigma_num / sigma_denom
 
         # compute gravitaional forces
-        Rb_i = Quaternion2Rotation(self._state[6:10])
-        f_g = Rb_i*np.array([
+        Ri_b = Quaternion2Rotation(self._state[6:10]).T
+        f_g = Ri_b @ np.array([
                             [0],
                             [0],
                             [MAV.mass*MAV.gravity],
@@ -215,8 +215,8 @@ class MavDynamics:
 
         # compute Lift and Drag Forces
         q_dynamic = 0.5*MAV.rho*(self._Va**2)*MAV.S_wing        # dynamic pressure --> force term (*S) for lift/drag
-        F_lift = q_dynamic*(CL * (MAV.C_L_q*0.5*MAV.c/self._Va*q) + MAV.C_L_delta_e*delta.elevator)
-        F_drag = q_dynamic*(CD * (MAV.C_D_q*0.5*MAV.c/self._Va*q) + MAV.C_D_delta_e*delta.elevator)
+        F_lift = q_dynamic*(CL + (MAV.C_L_q*0.5*MAV.c/self._Va*q) + MAV.C_L_delta_e*delta.elevator)
+        F_drag = q_dynamic*(CD + (MAV.C_D_q*0.5*MAV.c/self._Va*q) + MAV.C_D_delta_e*delta.elevator)
 
         #compute propeller thrust and torque
         thrust_prop, torque_prop = self._motor_thrust_torque(self._Va, delta.throttle)
@@ -232,13 +232,13 @@ class MavDynamics:
         My = q_dynamic*MAV.c*(MAV.C_m_0 + (MAV.C_m_alpha*self._alpha) + (MAV.C_m_q*MAV.c*0.5*q/self._Va) + (MAV.C_m_delta_e*delta.elevator))
        
         # compute lateral torques in body frame
-        Mx = q_dynamic*MAV.b*(MAV.C_ell_0 + MAV.C_ell_beta*self._beta + MAV.C_ell_p*0.5*MAV.b*r/self._Va + MAV.C_ell_delta_a*delta.aileron + MAV.C_ell_delta_r*delta.rudder)
-        Mz = q_dynamic*MAV.b*(MAV.C_n_0 + MAV.C_n_beta*self._beta + MAV.C_n_p*0.5*MAV.b*r/self._Va + MAV.C_n_delta_a*delta.aileron + MAV.C_n_delta_r*delta.rudder)
+        Mx = q_dynamic*MAV.b*(MAV.C_ell_0 + MAV.C_ell_beta*self._beta + MAV.C_ell_p*0.5*MAV.b*p/self._Va + MAV.C_ell_r*0.5*MAV.b*r/self._Va + MAV.C_ell_delta_a*delta.aileron + MAV.C_ell_delta_r*delta.rudder)
+        Mz = q_dynamic*MAV.b*(MAV.C_n_0 + MAV.C_n_beta*self._beta + MAV.C_n_p*0.5*MAV.b*p/self._Va + MAV.C_n_r*0.5*MAV.b*r/self._Va + MAV.C_n_delta_a*delta.aileron + MAV.C_n_delta_r*delta.rudder)
 
-        self._forces[0] = fx
-        self._forces[1] = fy
-        self._forces[2] = fz
-        return np.array([[fx, fy, fz, Mx, My, Mz]]).T
+        self._forces[0] = fx + f_g.item(0) + thrust_prop
+        self._forces[1] = fy + f_g.item(1)
+        self._forces[2] = fz + f_g.item(2)
+        return np.array([[fx, fy, fz, Mx + torque_prop, My, Mz]]).T
 
     def _motor_thrust_torque(self, Va, delta_t):
         # compute thrust and torque due to propeller  (See addendum by McLain)
@@ -249,7 +249,7 @@ class MavDynamics:
         # quadratic formula to solve for motor speed
         a = MAV.C_Q0 * MAV.rho * np.power(MAV.D_prop, 5) / ((2*np.pi)**2)
         b = (MAV.C_Q1 * MAV.rho * np.power(MAV.D_prop, 4) * Va / ((2*np.pi)**2)) + (MAV.KQ**2)/MAV.R_motor
-        c = (MAV.C_Q2 * MAV.rho * np.power(MAV.D_prop, 3) * Va**2) - (MAV.KQ/MAV.R_motor) + MAV.KQ*MAV.i0
+        c = (MAV.C_Q2 * MAV.rho * np.power(MAV.D_prop, 3) * Va**2) - (MAV.KQ/MAV.R_motor)*V_in + MAV.KQ*MAV.i0
 
         # operating propeller speed
         Omega_op = (-b + np.sqrt(b**2 - 4*a*c)) / (2.*a) # rad/sec

@@ -24,10 +24,13 @@ class MavViewer():
         self.window.setGeometry(0, 0, 1000, 1000)  # args: upper_left_x, upper_right_y, width, height
         grid = gl.GLGridItem() # make a grid to represent the ground
         grid.scale(20, 20, 20) # set the size of the grid (distance between each line)
+        # grid.setColor('k')
         self.window.addItem(grid) # add grid to viewer
         # self.window.setCameraPosition(distance=200) # distance from center of plot to camera
         self.window.setCameraPosition(pos=Vector(0, 0, 50), distance=200, elevation=0, azimuth=-30)
-        self.window.setBackgroundColor('k')  # set background color to black
+        self.window.setBackgroundColor('k')  # set background color
+        # self.window.setBackgroundColor('w')
+        self.window
         self.window.show()  # display configured window
         self.window.raise_() # bring window to the front
         self.plot_initialized = False # has the mav been plotted yet?

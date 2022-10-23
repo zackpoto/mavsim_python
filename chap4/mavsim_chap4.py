@@ -7,7 +7,9 @@ mavsimPy
 """
 import sys
 import os
+
 sys.path.append(os.path.split(sys.path[0])[0])
+# from tools.rotations import Euler2Quaternion, Euler2Rotation, Quaternion2Rotation
 
 import numpy as np
 import parameters.simulation_parameters as SIM
@@ -41,10 +43,10 @@ plot_time = sim_time
 print("Press Command-Q to exit...")
 while sim_time < SIM.end_time:
     # -------set control surfaces-------------
-    delta.elevator = -0.1
-    delta.aileron = 0 # 0.001836
-    delta.rudder = 0 # -0.0003026
-    delta.throttle = 0 # 1.00
+    delta.elevator = 0.1
+    delta.aileron = -0.3
+    delta.rudder = -0.02
+    delta.throttle = 1.0
 
     # -------physical system-------------
     current_wind = wind.update()  # get the new wind vector
@@ -67,3 +69,5 @@ while sim_time < SIM.end_time:
 
 if VIDEO is True:
     video.close()
+
+input("Press any key to terminate the program")
