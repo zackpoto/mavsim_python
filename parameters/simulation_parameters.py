@@ -5,13 +5,13 @@ import numpy as np
 ######################################################################################
                 #   sample times, etc
 ######################################################################################
-ts_simulation = 0.1  # smallest time step for simulation
+ts_simulation = 0.01  # smallest time step for simulation
 start_time = 0.  # start time for simulation
-end_time = 60.  # end time for simulation
+end_time = 10.  # end time for simulation
 
-ts_plotting = 0.1  # refresh rate for plots
+ts_plotting = 0.01  # refresh rate for plots
 
-ts_video = 0.1  # write rate for video
+ts_video = 0.02  # write rate for video
 
 ts_control = ts_simulation  # sample rate for the controller
 

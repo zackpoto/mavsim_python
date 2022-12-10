@@ -14,21 +14,22 @@ from message_types.msg_delta import MsgDelta
 def compute_trim(mav, Va, gamma):
     # define initial state and input
     e0 = Euler2Quaternion(0., gamma, 0.)
-    state0 = np.array([[],  # pn
-                   [],  # pe
-                   [],  # pd
-                   [],  # u
-                   [],  # v
-                   [],  # w
-                   [],  # e0
-                   [],  # e1
-                   [],  # e2
-                   [],  # e3
-                   [],  # p
-                   [],  # q
-                   []   # r
-                   ])
-    delta0 = #MsgDelta()
+    state0 = np.array([
+        [mav._state.item(0)],  # pn
+        [mav._state.item(1)],  # pe
+        [mav._state.item(2)],  # pd
+        [mav._state.item(3)],  # u
+        [mav._state.item(4)],  # v
+        [mav._state.item(5)],  # w
+        [e0.item(0)],  # e0
+        [e0.item(1)],  # e1
+        [e0.item(2)],  # e2
+        [e0.item(3)],  # e3
+        [mav._state.item(10)],  # p
+        [mav._state.item(11)],  # q
+        [mav._state.item(12)]   # r
+    ])
+    delta0 = MsgDelta()
     x0 = np.concatenate((state0, delta0.to_array()), axis=0)
     # define equality constraints
     cons = ({'type': 'eq',
@@ -54,8 +55,7 @@ def compute_trim(mav, Va, gamma):
                                 ])
              })
     # solve the minimization problem to find the trim states and inputs
-
-    res = minimize(trim_objective_fun, x0, method='SLSQP', args=(mav, Va, gamma),
+    res = minimize(trim_objective_fun, np.squeeze(x0), method='SLSQP', args=(mav, Va, gamma),
                    constraints=cons, options={'ftol': 1e-10, 'disp': True})
     # extract trim state and input and return
     trim_state = np.array([res.x[0:13]]).T
@@ -65,10 +65,47 @@ def compute_trim(mav, Va, gamma):
                           throttle=res.x.item(16))
     trim_input.print()
     print('trim_state=', trim_state.T)
+
+    trim_state = np.array(  [[-5.95888304e-15],
+                        [ 0.00000000e+00],
+                        [-1.00000000e+02],
+                        [ 2.49687427e+01],
+                        [ 0.00000000e+00],
+                        [ 1.24975516e+00],
+                        [ 9.99687380e-01],
+                        [ 0.00000000e+00],
+                        [ 2.50028494e-02],
+                        [ 0.00000000e+00],
+                        [ 0.00000000e+00],
+                        [ 0.00000000e+00],
+                        [ 0.00000000e+00]])
+
+    trim_input = MsgDelta(elevator=-0.1247780701597401,
+                          aileron=0.0018361809638628682,
+                          rudder=-0.000302608037876341,
+                          throttle=0.6767522859047431)
+
     return trim_state, trim_input
 
 
 def trim_objective_fun(x, mav, Va, gamma):
     # objective function to be minimized
-    J = 
+
+    #slide 19 chap5
+    state = x[0:13]
+    delta = MsgDelta(
+        elevator = x.item(13),
+        aileron = x.item(14),
+        rudder = x.item(15),
+        throttle=x.item(16)
+    )
+    desired_trim_state_dot = np.array([
+        [0., 0., -Va*np.sin(gamma), 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.]
+    ]).T
+    mav._state = state
+    mav._update_velocity_data()
+    forces_moments = mav._forces_moments(delta)
+    f = mav._derivatives(state, forces_moments)
+    tmp = desired_trim_state_dot - f
+    J = np.linalg.norm(tmp[2:13])**2.0
     return J

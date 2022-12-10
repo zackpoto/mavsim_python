@@ -9,30 +9,41 @@ mavsim_python: mav viewer (for chapter 2)
 import sys
 sys.path.append("..")
 import numpy as np
+import pyqtgraph.Qt as QtCore
 import pyqtgraph as pg
 import pyqtgraph.opengl as gl
 import pyqtgraph.Vector as Vector
 from chap2.draw_mav import DrawMav
 
+# from PyQt5 import QtGui
 
 class MavViewer():
     def __init__(self):
         # initialize Qt gui application and window
-        self.app = pg.QtWidgets.QApplication([])  # initialize QT
+        self.app = pg.mkQApp()  # initialize QT
+
+        # self.w = QtGui.QWidget()
+
         self.window = gl.GLViewWidget()  # initialize the view object
         self.window.setWindowTitle('MAV Viewer')
         self.window.setGeometry(0, 0, 1000, 1000)  # args: upper_left_x, upper_right_y, width, height
         grid = gl.GLGridItem() # make a grid to represent the ground
         grid.scale(20, 20, 20) # set the size of the grid (distance between each line)
+
+        # b1 = pg.ButtonItem(parentItem = self.window)
+
         # grid.setColor('k')
         self.window.addItem(grid) # add grid to viewer
         # self.window.setCameraPosition(distance=200) # distance from center of plot to camera
-        self.window.setCameraPosition(pos=Vector(0, 0, 50), distance=200, elevation=0, azimuth=-30)
+        self.window.setCameraPosition(pos=Vector(0, 0, 0), distance=50, elevation=0, azimuth=0)
         self.window.setBackgroundColor('k')  # set background color
         # self.window.setBackgroundColor('w')
-        self.window
+
+
         self.window.show()  # display configured window
         self.window.raise_() # bring window to the front
+
+
         self.plot_initialized = False # has the mav been plotted yet?
         self.mav_plot = []
 
@@ -45,7 +56,7 @@ class MavViewer():
         else:
             self.mav_plot.update(state)
         # update the center of the camera view to the mav location
-        # view_location = Vector(state.east, state.north, state.altitude)  # defined in ENU coordinates
-        # self.window.opts['center'] = view_location
+        view_location = Vector(state.east, state.north, state.altitude)  # defined in ENU coordinates
+        self.window.opts['center'] = view_location
         # redraw
         self.app.processEvents()

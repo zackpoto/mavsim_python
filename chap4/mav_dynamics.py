@@ -51,8 +51,6 @@ class MavDynamics:
         self._beta = 0
         # initialize true_state message
         self.true_state = MsgState()
-        # peform unit test for _update_velocity_data() function
-        self._update_velocity_unit_tests()
 
     ###################################
     # public functions
@@ -291,11 +289,6 @@ class MavDynamics:
         self.true_state.r = self._state.item(12)
         self.true_state.wn = self._wind.item(0)
         self.true_state.we = self._wind.item(1)
-
-    def _update_velocity_unit_tests(self):
-        cur_Va = self._Va
-        cur_alpha = self._alpha
-        cur_beta = self._beta
 
 # Unit tests for wind dynamics, run this file to see them work...
 if __name__ == "__main__":

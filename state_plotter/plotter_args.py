@@ -28,7 +28,7 @@ class PlotboxArgs:
     def __init__(self, title=None, plots=None, sigma_bounds=None, legend=True,
                  time_window=15.0, max_length=None,
                  axis_color='w', axis_width=1, labels=None, plot_hues=4,
-                 plot_min_hue=0, plot_max_hue=270, plot_min_value=200, plot_max_value=255,
+                 plot_min_hue=60, plot_max_hue=270, plot_min_value=200, plot_max_value=255,
                  is_angle=False, rad2deg=False):
         # Define title
         if title is not None:

@@ -14,7 +14,9 @@ Run in terminal using commands:
 """
 
 import sys
-sys.path.append('/Users/danada/Coding/Flight Controls EE 674/mavsim_python') #sys.path.append('..')
+import os
+# sys.path.append('/Users/danada/Coding/Flight Controls EE 674/mavsim_python') #sys.path.append('..')
+sys.path.append(os.path.split(sys.path[0])[0])
 import numpy as np
 import parameters.simulation_parameters as SIM
 
@@ -35,6 +37,7 @@ def test_trim():
     mav = MavDynamics(SIM.ts_simulation)
     # set state
     mav._state = np.zeros((13,1),dtype=float)
+    mav._state[2,0] = -100 # set u0
     mav._state[3,0] = 25.0 # set u0
     mav._state[6,0] = 1.0 # set e0
     mav._Va = 25.0
@@ -48,93 +51,93 @@ def test_trim():
     assert np.isclose(trimInput.rudder, trueValues.trimInputR)
     assert np.isclose(trimInput.throttle, trueValues.trimInputT)
 
-# test f_euler
-def test_f_euler():
-    # initialize elements of the architecture
-    mav = MavDynamics(SIM.ts_simulation)
-    Va = 25.
-    gamma = 0.*np.pi/180.
-    trim_state, trim_input = compute_trim(mav, Va, gamma)
-    mav._state = trim_state
-    x_euler = np.array([[-5.95888304e-15],
-                        [ 0.00000000e+00],
-                        [-1.00000000e+02],
-                        [ 2.49687427e+01],
-                        [ 0.00000000e+00],
-                        [ 1.24975516e+00],
-                        [ 0.00000000e+00],
-                        [ 5.00109104e-02],
-                        [ 0.00000000e+00],
-                        [ 0.00000000e+00],
-                        [ 0.00000000e+00],
-                        [ 0.00000000e+00]])
-    delta = MsgDelta(-0.1247780701597401,0.0018361809638628682,-0.000302608037876341,0.6767522859047431)
+# # test f_euler
+# def test_f_euler():
+#     # initialize elements of the architecture
+#     mav = MavDynamics(SIM.ts_simulation)
+#     Va = 25.
+#     gamma = 0.*np.pi/180.
+#     trim_state, trim_input = compute_trim(mav, Va, gamma)
+#     mav._state = trim_state
+#     x_euler = np.array([[-5.95888304e-15],
+#                         [ 0.00000000e+00],
+#                         [-1.00000000e+02],
+#                         [ 2.49687427e+01],
+#                         [ 0.00000000e+00],
+#                         [ 1.24975516e+00],
+#                         [ 0.00000000e+00],
+#                         [ 5.00109104e-02],
+#                         [ 0.00000000e+00],
+#                         [ 0.00000000e+00],
+#                         [ 0.00000000e+00],
+#                         [ 0.00000000e+00]])
+#     delta = MsgDelta(-0.1247780701597401,0.0018361809638628682,-0.000302608037876341,0.6767522859047431)
 
-    f_euler_Output = cm.f_euler(mav, x_euler, delta)
-    assert np.allclose(f_euler_Output,trueValues.fEuler)
+#     f_euler_Output = cm.f_euler(mav, x_euler, delta)
+#     assert np.allclose(f_euler_Output,trueValues.fEuler)
 
-# test df_dx
-def test_df_dx():
-    # initialize elements of the architecture
-    mav = MavDynamics(SIM.ts_simulation)
-    Va = 25.
-    gamma = 0.*np.pi/180.
-    trim_state, trim_input = compute_trim(mav, Va, gamma)
-    mav._state = trim_state
-    x_euler = np.array([[-5.95888304e-15],
-                        [ 0.00000000e+00],
-                        [-1.00000000e+02],
-                        [ 2.49687427e+01],
-                        [ 0.00000000e+00],
-                        [ 1.24975516e+00],
-                        [ 0.00000000e+00],
-                        [ 5.00109104e-02],
-                        [ 0.00000000e+00],
-                        [ 0.00000000e+00],
-                        [ 0.00000000e+00],
-                        [ 0.00000000e+00]])
-    delta = MsgDelta(-0.1247780701597401,0.0018361809638628682,-0.000302608037876341,0.6767522859047431)
-    A = cm.df_dx(mav, x_euler, delta)
-    tempvar = A - trueValues.A
-    assert np.allclose(A,trueValues.A,)
+# # test df_dx
+# def test_df_dx():
+#     # initialize elements of the architecture
+#     mav = MavDynamics(SIM.ts_simulation)
+#     Va = 25.
+#     gamma = 0.*np.pi/180.
+#     trim_state, trim_input = compute_trim(mav, Va, gamma)
+#     mav._state = trim_state
+#     x_euler = np.array([[-5.95888304e-15],
+#                         [ 0.00000000e+00],
+#                         [-1.00000000e+02],
+#                         [ 2.49687427e+01],
+#                         [ 0.00000000e+00],
+#                         [ 1.24975516e+00],
+#                         [ 0.00000000e+00],
+#                         [ 5.00109104e-02],
+#                         [ 0.00000000e+00],
+#                         [ 0.00000000e+00],
+#                         [ 0.00000000e+00],
+#                         [ 0.00000000e+00]])
+#     delta = MsgDelta(-0.1247780701597401,0.0018361809638628682,-0.000302608037876341,0.6767522859047431)
+#     A = cm.df_dx(mav, x_euler, delta)
+#     tempvar = A - trueValues.A
+#     assert np.allclose(A,trueValues.A,)
 
-# test df_du
-def test_df_du():
-    # initialize elements of the architecture
-    mav = MavDynamics(SIM.ts_simulation)
-    Va = 25.
-    gamma = 0.*np.pi/180.
-    trim_state, trim_input = compute_trim(mav, Va, gamma)
-    mav._state = trim_state
-    x_euler = np.array([[-5.95888304e-15],
-                        [ 0.00000000e+00],
-                        [-1.00000000e+02],
-                        [ 2.49687427e+01],
-                        [ 0.00000000e+00],
-                        [ 1.24975516e+00],
-                        [ 0.00000000e+00],
-                        [ 5.00109104e-02],
-                        [ 0.00000000e+00],
-                        [ 0.00000000e+00],
-                        [ 0.00000000e+00],
-                        [ 0.00000000e+00]])
-    B = cm.df_du(mav, x_euler, trim_input)
-    assert np.allclose(B, trueValues.B)
-test_df_du()
+# # test df_du
+# def test_df_du():
+#     # initialize elements of the architecture
+#     mav = MavDynamics(SIM.ts_simulation)
+#     Va = 25.
+#     gamma = 0.*np.pi/180.
+#     trim_state, trim_input = compute_trim(mav, Va, gamma)
+#     mav._state = trim_state
+#     x_euler = np.array([[-5.95888304e-15],
+#                         [ 0.00000000e+00],
+#                         [-1.00000000e+02],
+#                         [ 2.49687427e+01],
+#                         [ 0.00000000e+00],
+#                         [ 1.24975516e+00],
+#                         [ 0.00000000e+00],
+#                         [ 5.00109104e-02],
+#                         [ 0.00000000e+00],
+#                         [ 0.00000000e+00],
+#                         [ 0.00000000e+00],
+#                         [ 0.00000000e+00]])
+#     B = cm.df_du(mav, x_euler, trim_input)
+#     assert np.allclose(B, trueValues.B)
+# test_df_du()
 
-# test compute SS model
-def test_compute_SS():
-    # initialize elements of the architecture
-    mav = MavDynamics(SIM.ts_simulation)
-    Va = 25.
-    gamma = 0.*np.pi/180.
-    trim_state, trim_input = compute_trim(mav, Va, gamma)
-    mav._state = trim_state
-    A_lon, B_lon, A_lat, B_lat = cm.compute_ss_model(mav, trim_state, trim_input)
-    assert np.allclose(A_lon,trueValues.A_lon)
-    assert np.allclose(B_lon,trueValues.B_lon)
-    assert np.allclose(A_lat,trueValues.A_lat)
-    assert np.allclose(B_lat,trueValues.B_lat)
+# # test compute SS model
+# def test_compute_SS():
+#     # initialize elements of the architecture
+#     mav = MavDynamics(SIM.ts_simulation)
+#     Va = 25.
+#     gamma = 0.*np.pi/180.
+#     trim_state, trim_input = compute_trim(mav, Va, gamma)
+#     mav._state = trim_state
+#     A_lon, B_lon, A_lat, B_lat = cm.compute_ss_model(mav, trim_state, trim_input)
+#     assert np.allclose(A_lon,trueValues.A_lon)
+#     assert np.allclose(B_lon,trueValues.B_lon)
+#     assert np.allclose(A_lat,trueValues.A_lat)
+#     assert np.allclose(B_lat,trueValues.B_lat)
 
 
 # test compute TF model

@@ -16,7 +16,7 @@ class WindSimulation:
         # self._steady_state = np.array([[0., 5., 0.]]).T
 
         #   Dryden gust model parameters (section 4.4 UAV book)
-        Va = 2 # must set Va to a constant value
+        Va = 0 # must set Va to a constant value
         Lu = 200
         Lv = 200
         Lw = 50

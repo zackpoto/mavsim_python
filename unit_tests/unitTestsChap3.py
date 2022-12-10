@@ -8,7 +8,9 @@ Run in terminal using commands:
 """
 
 import sys
-sys.path.append('/Users/danada/Coding/Flight Controls EE 674/mavsim_python') #sys.path.append('..')
+import os
+# sys.path.append('/Users/danada/Coding/Flight Controls EE 674/mavsim_python') #sys.path.append('..')
+sys.path.append(os.path.split(sys.path[0])[0])
 import numpy as np
 import parameters.simulation_parameters as SIM
 
@@ -205,16 +207,17 @@ def test_update_Mz():
     mav.update(forces_moments)  # propagate the MAV dynamics
     #compare against true values
     assert np.allclose(mav._state, trueValues.state_Mz)
+    
 test_update_Mz()
-# test_derivative_fx()
-# test_update_fx()
-# test_derivative_fy()
-# test_update_fy()
-# test_derivative_fz()
-# test_update_fz()
-# test_derivative_Mx()
-# test_update_Mx()
-# test_derivative_My()
-# test_update_My()
-# test_derivative_Mz()
-# test_update_Mz()
+test_derivative_fx()
+test_update_fx()
+test_derivative_fy()
+test_update_fy()
+test_derivative_fz()
+test_update_fz()
+test_derivative_Mx()
+test_update_Mx()
+test_derivative_My()
+test_update_My()
+test_derivative_Mz()
+test_update_Mz()

@@ -26,7 +26,7 @@ mav_view = MavViewer()  # initialize the mav viewer
 data_view = DataViewer()  # initialize view of data plots
 if VIDEO is True:
     from chap2.video_writer import VideoWriter
-    video = VideoWriter(video_name="chap4_video.avi",
+    video = VideoWriter(video_name="chap4_video.mp4",
                         bounding_box=(0, 0, 1000, 1000),
                         output_rate=SIM.ts_video)
 
@@ -43,10 +43,10 @@ plot_time = sim_time
 print("Press Command-Q to exit...")
 while sim_time < SIM.end_time:
     # -------set control surfaces-------------
-    delta.elevator = 0.1248
-    delta.aileron = -0.1 # 0.001836
-    delta.rudder = -0.0003026
-    delta.throttle = 0.6868
+    delta.elevator = 0.25 # -0.1248
+    delta.aileron = 0 #-0.01836
+    delta.rudder = 0 #-0.0003026
+    delta.throttle = 0 #0.6868
 
     # -------physical system-------------
     current_wind = wind.update()  # get the new wind vector
