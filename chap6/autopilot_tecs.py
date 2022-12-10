@@ -59,6 +59,7 @@ class Autopilot:
 
     def update(self, cmd, state):
 
+        #CHAP6 - slide 25
         # lateral autopilot
         chi_c = 
         phi_c = 

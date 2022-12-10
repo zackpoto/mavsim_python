@@ -14,7 +14,7 @@ from chap3.data_viewer import DataViewer
 from chap4.mav_dynamics import MavDynamics
 from chap4.wind_simulation import WindSimulation
 from chap5.trim import compute_trim
-# from chap5.compute_models import compute_model
+from chap5.compute_models import compute_model
 from tools.signals import Signals
 
 # initialize the visualization
@@ -39,8 +39,8 @@ trim_state, trim_input = compute_trim(mav, Va, gamma)
 mav._state = trim_state  # set the initial state of the mav to the trim state
 delta = trim_input  # set input to constant constant trim input
 
-# # # compute the state space model linearized about trim
-# # compute_model(mav, trim_state, trim_input)
+# compute the state space model linearized about trim
+compute_model(mav, trim_state, trim_input)
 
 # this signal will be used to excite modes
 input_signal = Signals(amplitude=.05,

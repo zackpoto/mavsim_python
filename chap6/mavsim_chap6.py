@@ -85,6 +85,6 @@ while sim_time < SIM.end_time:
 if VIDEO is True:
     video.close()
 
-
+input("Press any key to terminate the program")
 
 

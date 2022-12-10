@@ -87,7 +87,6 @@ def compute_trim(mav, Va, gamma):
 
     return trim_state, trim_input
 
-
 def trim_objective_fun(x, mav, Va, gamma):
     # objective function to be minimized
 
