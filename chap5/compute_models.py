@@ -113,8 +113,17 @@ def compute_tf_model(mav, trim_state, trim_input):
 
 def compute_ss_model(mav, trim_state, trim_input):
     x_euler = euler_state(trim_state)
-    A = df_dx(mav, x_euler, trim_input)
-    B = df_du(mav, x_euler, trim_input)
+    Aq = df_dx(mav, x_euler, trim_input)
+    Bq = df_du(mav, x_euler, trim_input)
+
+    T = dt_dq(mav, trim_state, trim_input)
+    Tinv = dtI_dq(mav, trim_state, trim_input)
+
+    A = T @ Aq @ Tinv
+    A[2, :] = -A[2, :]
+
+    B = T @ Bq
+    B[2, :] = - B[2, :]
 
     # extract longitudinal states (u, w, q, theta, pd) and change pd to h
     #CHAP5 - slide 51
@@ -160,13 +169,22 @@ def euler_state(x_quat):
     # to x_euler with attitude represented by Euler angles
 
     #CHAP5 - slide 48
-    p = x_quat[0:3]
-    v = x_quat[3:6]
-    q = x_quat[6:10]
-    theta = np.array([Quaternion2Euler(q)]).T
-    w = x_quat[10:13]
+    e = np.array([x_quat.item(6), x_quat.item(7), x_quat.item(8), x_quat.item(9)])
+    [phi, theta, psi] = Quaternion2Euler(e)
+    x_euler = np.array([[x_quat.item(0)],
+                        [x_quat.item(1)],
+                        [x_quat.item(2)],
+                        [x_quat.item(3)],
+                        [x_quat.item(4)],
+                        [x_quat.item(5)],
+                        [phi],
+                        [theta],
+                        [psi],
+                        [x_quat.item(10)],
+                        [x_quat.item(11)],
+                        [x_quat.item(12)]
+                        ])
 
-    x_euler = np.concatenate((p, v, theta, w), axis=0)
     return x_euler
 
 def quaternion_state(x_euler):
@@ -174,21 +192,30 @@ def quaternion_state(x_euler):
     # to x_quat with attitude represented by quaternions
 
     #CHAP5 - slide 48
-    p = x_euler[0:3]
-    v = x_euler[3:6]
-    theta = x_euler[6:9]
-    q = Euler2Quaternion(theta.item(0), theta.item(1), theta.item(2))
-    w = x_euler[9:12]
+    e = Euler2Quaternion(x_euler.item(6), x_euler.item(7), x_euler.item(8))
+    x_quat = np.array([[x_euler.item(0)],
+                       [x_euler.item(1)],
+                       [x_euler.item(2)],
+                       [x_euler.item(3)],
+                       [x_euler.item(4)],
+                       [x_euler.item(5)],
+                       [e.item(0)],
+                       [e.item(1)],
+                       [e.item(2)],
+                       [e.item(3)],
+                       [x_euler.item(9)],
+                       [x_euler.item(10)],
+                       [x_euler.item(11)]
+                       ])
 
-    x_quat = np.concatenate((p, v, q, w), axis=0)
     return x_quat
 
 def f_euler(mav, x_euler, delta):
-    # return 12x1 dynamics (as if state were Euler state)
-    # compute f at euler_state
-    forces_moments = mav._forces_moments(delta)
 
+    forces_moments = mav._forces_moments(delta)
     x_quat = quaternion_state(x_euler)
+    mav._state = x_quat
+    mav._update_velocity_data(np.zeros((6,1)))
     f_quat = mav._derivatives(x_quat, forces_moments)
     f_euler_ = euler_state(f_quat)
     return f_euler_
@@ -197,6 +224,12 @@ def df_dx(mav, x_euler, delta):
     # CHAP5 - slide 47
 
     # take partial of f_euler with respect to x_euler
+
+    # A = jacobian(f_euler, mav, x_euler, delta, 0)
+    # print("HAVE")
+    # print(A)
+    # return A
+
     m = 12
     n = 12
     eps = 0.001
@@ -208,6 +241,8 @@ def df_dx(mav, x_euler, delta):
         f_at_x_eps = f_euler(mav, x_eps, delta)
         df_dxi = (f_at_x_eps-f_at_x)/eps
         A[:, i] = df_dxi[:, 0]
+    print("HELLO")
+    print(A)
     return A
 
 
@@ -245,3 +280,86 @@ def dT_ddelta_t(mav, Va, delta_t):
     T, Q = mav._motor_thrust_torque(Va, delta_t)
     print((T_eps - T)/eps/11)
     return (T_eps - T) / eps
+
+def dt_dq(mav, x_euler, delta):
+    dt_dq = np.zeros([12, 13])
+    dt_dq[0:6, 0:6] = np.eye(6)
+    dt_dq[9:, 10:] = np.eye(3)
+    dt_dq[6:9, 6:10] = jacobian(Quaternion2Euler, mav, x_euler[6:10], delta, 2)
+    return dt_dq
+
+def dtI_dq(mav, x_euler, delta):
+    [phi, theta, psi] = Quaternion2Euler(x_euler[6:10])
+    dtI_dq = np.zeros([13, 12])
+    dtI_dq[0:6, 0:6] = np.eye(6)
+    dtI_dq[10:, 9:] = np.eye(3)
+    dtI_dq[6:10, 6:9] = jacobian(Euler2Quaternion, mav, (phi, theta, psi), delta, 3)
+    return dtI_dq
+
+def jacobian(fun, mav, x, input, spot):
+    # compute jacobian of fun with respect to x
+    if spot == 0:
+        f = fun(mav, x, input)
+        m = f.shape[0]
+        n = x.shape[0]
+        eps = 0.01  # deviation
+        A = np.zeros((m, n))
+        for i in range(0, n):
+            x_eps = np.copy(x)
+            x_eps[i][0] += eps
+            f_eps = fun(mav, x_eps, input)
+            df = (f_eps - f) / eps
+            A[:, i] = df[:, 0]
+        return A
+    elif spot == 1:
+        f = fun(mav, x, input)
+        m = f.shape[0]
+        n = input.shape[0]
+        eps = 0.01  # deviation
+        B = np.zeros((m, n))
+        for i in range(0, n):
+            input_eps = np.copy(input)
+            input_eps[i][0] += eps
+            f_eps = fun(mav, x, input_eps)
+            df = (f_eps - f) / eps
+            B[:, i] = df[:, 0]
+        return B
+    elif spot == 2:
+        f = np.asarray(fun(x))
+        f = f.reshape([len(f), 1])
+        m = f.shape[0]
+        n = x.shape[0]
+        eps = 0.01  # deviation
+        dthde = np.zeros((m, n))
+        for i in range(0, n):
+            x_eps = np.copy(x)
+            x_eps[i][0] += eps
+
+            f_eps = np.asarray(fun(x_eps))
+            f_eps = f_eps.reshape([len(f), 1])
+            df = np.array([[(f_eps.item(0) - f.item(0)) / eps, (f_eps.item(1) - f.item(1)) / eps, (f_eps.item(2) - f.item(2)) / eps]]).T
+            # df = df.reshape([3,1])
+            dthde[:, i] = df[:, 0]
+        return dthde
+    elif spot == 3:
+        phi = x[0]
+        theta = x[1]
+        psi = x[2]
+        f = np.asarray(fun(phi, theta, psi))
+        f = f.reshape([len(f), 1])
+        m = f.shape[0]
+        n = len(x)
+        eps = 0.01  # deviation
+        dthde = np.zeros((m, n))
+        for i in range(0, n):
+            x_eps = np.copy(x).reshape([1, 3])
+            x_eps[0][i] += eps
+            phi = x_eps.item(0)
+            theta = x_eps.item(1)
+            psi = x_eps.item(2)
+            f_eps = np.asarray(fun(phi, theta, psi))
+            f_eps = f_eps.reshape([len(f), 1])
+            df = (f_eps - f) / eps
+            # df = df.reshape([3,1])
+            dthde[:, i] = df[:, 0]
+        return dthde

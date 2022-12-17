@@ -11,20 +11,20 @@ Va0 = TF.Va_trim
 
 #----------roll loop-------------
 # get transfer function data for delta_a to phi
-wn_roll = 20 #7
+wn_roll = 30 #7
 zeta_roll = 0.707
 roll_kp = wn_roll**2/TF.a_phi2
 roll_kd = (2.0 * zeta_roll * wn_roll - TF.a_phi1) / TF.a_phi2
 
 #----------course loop-------------
-wn_course = wn_roll / 20.0
+wn_course = wn_roll / 200
 zeta_course = 1.0
 course_kp = 2 * zeta_course * wn_course * Va0 / gravity
 course_ki = wn_course**2 * Va0 / gravity
 
 #----------yaw damper-------------
-yaw_damper_p_wo = 0.45  # (old) 1/0.5
-yaw_damper_kr = 0.2  # (old) 0.5
+yaw_damper_p_wo = 20  # (old) 1/0.5
+yaw_damper_kr = 2  # (old) 0.5
 
 #----------pitch loop-------------
 wn_pitch = 24.0

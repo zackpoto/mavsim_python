@@ -29,16 +29,22 @@ def compute_trim(mav, Va, gamma):
         [mav._state.item(11)],  # q
         [mav._state.item(12)]   # r
     ])
+
     delta0 = MsgDelta()
+    
     x0 = np.concatenate((state0, delta0.to_array()), axis=0)
     # define equality constraints
+    # bnds = ((None, None), (None, None), (None, None), (None, None),
+    #         (None, None), (None, None), (None, None), (None, None), 
+    #         (None, None), (None, None), (None, None), (None, None), (None, None),
+    #         (-1.0, 1.0), (-1.0, 1.0), (-1.0, 1.0), (0.0, 1.0))
     cons = ({'type': 'eq',
              'fun': lambda x: np.array([
                                 x[3]**2 + x[4]**2 + x[5]**2 - Va**2,  # magnitude of velocity vector is Va
                                 x[4],  # v=0, force side velocity to be zero
                                 x[6]**2 + x[7]**2 + x[8]**2 + x[9]**2 - 1.,  # force quaternion to be unit length
-                                x[7],  # e1=0  - forcing e1=e3=0 ensures zero roll and zero yaw in trim
-                                x[9],  # e3=0
+                                x[7],   # e1=0  - forcing e1=e3=0 ensures zero roll and zero yaw in trim
+                                x[9],   # e3=0
                                 x[10],  # p=0  - angular rates should all be zero
                                 x[11],  # q=0
                                 x[12],  # r=0
@@ -55,7 +61,7 @@ def compute_trim(mav, Va, gamma):
                                 ])
              })
     # solve the minimization problem to find the trim states and inputs
-    res = minimize(trim_objective_fun, np.squeeze(x0), method='SLSQP', args=(mav, Va, gamma),
+    res = minimize(trim_objective_fun, np.squeeze(x0), method='SLSQP', args=(mav, Va, gamma), #bounds=bnds,
                    constraints=cons, options={'ftol': 1e-10, 'disp': True})
     # extract trim state and input and return
     trim_state = np.array([res.x[0:13]]).T
@@ -63,27 +69,9 @@ def compute_trim(mav, Va, gamma):
                           aileron=res.x.item(14),
                           rudder=res.x.item(15),
                           throttle=res.x.item(16))
+
     trim_input.print()
     print('trim_state=', trim_state.T)
-
-    trim_state = np.array(  [[-5.95888304e-15],
-                        [ 0.00000000e+00],
-                        [-1.00000000e+02],
-                        [ 2.49687427e+01],
-                        [ 0.00000000e+00],
-                        [ 1.24975516e+00],
-                        [ 9.99687380e-01],
-                        [ 0.00000000e+00],
-                        [ 2.50028494e-02],
-                        [ 0.00000000e+00],
-                        [ 0.00000000e+00],
-                        [ 0.00000000e+00],
-                        [ 0.00000000e+00]])
-
-    trim_input = MsgDelta(elevator=-0.1247780701597401,
-                          aileron=0.0018361809638628682,
-                          rudder=-0.000302608037876341,
-                          throttle=0.6767522859047431)
 
     return trim_state, trim_input
 
