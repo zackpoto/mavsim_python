@@ -40,7 +40,7 @@ mav._state = trim_state  # set the initial state of the mav to the trim state
 delta = trim_input  # set input to constant constant trim input
 
 # compute the state space model linearized about trim
-compute_model(mav, trim_state, trim_input)
+# compute_model(mav, trim_state, trim_input)
 
 # this signal will be used to excite modes
 input_signal = Signals(amplitude=.05,
@@ -55,8 +55,8 @@ print("Press Command-Q to exit...")
 while sim_time < SIM.end_time:
 
     # -------physical system-------------
-    #current_wind = wind.update()  # get the new wind vector
-    current_wind = np.zeros((6, 1))
+    current_wind = wind.update()  # get the new wind vector
+    # current_wind = np.zeros((6, 1))
     # this input excites the phugoid mode by adding an impulse at t=5.0
     # delta.elevator += input_signal.impulse(sim_time)
     # delta.rudder += input_signal.doublet(sim_time)

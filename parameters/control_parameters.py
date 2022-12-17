@@ -17,8 +17,8 @@ roll_kp = wn_roll**2/TF.a_phi2
 roll_kd = (2.0 * zeta_roll * wn_roll - TF.a_phi1) / TF.a_phi2
 
 #----------course loop-------------
-wn_course = wn_roll / 200
-zeta_course = 1.0
+wn_course = wn_roll / 1
+zeta_course = 2
 course_kp = 2 * zeta_course * wn_course * Va0 / gravity
 course_ki = wn_course**2 * Va0 / gravity
 
@@ -41,7 +41,7 @@ altitude_ki = wn_altitude**2 / K_theta_DC / Va0
 altitude_zone = 10.0  # moving saturation limit around current altitude
 
 #---------airspeed hold using throttle---------------
-wn_airspeed_throttle = 3.0
+wn_airspeed_throttle = 2.0
 zeta_airspeed_throttle = 2  # 0.707
 airspeed_throttle_kp = (2.0 * zeta_airspeed_throttle * wn_airspeed_throttle - TF.a_V1) / TF.a_V2
 airspeed_throttle_ki = wn_airspeed_throttle**2 / TF.a_V2

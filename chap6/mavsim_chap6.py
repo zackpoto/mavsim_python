@@ -39,19 +39,20 @@ autopilot = Autopilot(SIM.ts_simulation)
 from message_types.msg_autopilot import MsgAutopilot
 commands = MsgAutopilot()
 
-# Va_command = Signals(dc_offset=25.0,
-#                      amplitude=3.0,
-#                      start_time=2.0,
-#                      frequency=0.001)
-altitude_command = Signals(dc_offset=0.0,
-                           amplitude=100.0,
-                           start_time=2.0,
-                           frequency=0.1)
+Va_command = Signals(dc_offset=25.0,
+                     amplitude=3.0,
+                     start_time=2.0,
+                     frequency=0.1)
 
-# course_command = Signals(dc_offset=np.radians(30),
-#                          amplitude=np.radians(10),
-#                          start_time=0,
-#                          frequency=0.5)
+altitude_command = Signals(dc_offset=100.0,
+                           amplitude=25.0,
+                           start_time=2.0,
+                           frequency=0.01)
+
+course_command = Signals(dc_offset=np.radians(0),
+                         amplitude=np.radians(90),
+                         start_time=0,
+                         frequency=0.25)
 
 # initialize the simulation time
 sim_time = SIM.start_time
@@ -61,9 +62,9 @@ print("Press Command-Q to exit...")
 while sim_time < SIM.end_time:
 
     # -------autopilot commands-------------
-    commands.airspeed_command = 30 # Va_command.square(sim_time)
-    commands.course_command = course_command.sinusoid(sim_time)
-    commands.altitude_command = altitude_command.square(sim_time)
+    commands.airspeed_command = Va_command.trapezoid(sim_time)
+    commands.course_command = 0
+    commands.altitude_command = 100
 
     # -------autopilot-------------
     estimated_state = mav.true_state  # uses true states in the control
